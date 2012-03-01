@@ -159,12 +159,31 @@ int main()
 
 	// Nios II Console welcome text
 	printf("Demo SoPC program\n");
-	printf("Enter command: ledr <value> | ledg <value> | sw | lcd <text> | mult <value> | hex <value> | counter \n\n");
+	printf("Enter command: ledr <value> | ledg <value> | sw | lcd <text> | mult <value>\n");
+	printf("              | hex <value> | counter | mute <value> | unmute \n\n");
 
 	while(1)
 	{
 		printf("CMD:\> ");
 		scanf(" %s", &cmd);
+
+		if (!strcmp(cmd, "audio")) // Bit 0 = left, Bit 1 = right audio channel
+		{
+			printf("audio value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE));
+		}
+
+		if (!strcmp(cmd, "mute")) // Bit 0 = left, Bit 1 = right audio channel
+		{
+			scanf(" %d", &value);
+			IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, value);
+			printf("mute %d\n", value);
+		}
+
+		if (!strcmp(cmd, "unmute"))
+		{
+			IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, 0);
+			printf("unmute\n");
+		}
 
 		if (!strcmp(cmd, "counter")) // Counter read
 		{
