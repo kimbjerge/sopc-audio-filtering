@@ -171,7 +171,7 @@ int main()
 	// Nios II Console welcome text
 	printf("Demo SoPC program\n");
 	printf("Enter command: ledr <value> | ledg <value> | sw | lcd <text> | mult <value>\n");
-	printf("              | hex <value> | counter | mute <value> | unmute \n\n");
+	printf("               mute <value> | unmute | audio \n\n");
 
 	while(1)
 	{
@@ -199,7 +199,7 @@ int main()
 		if (!strcmp(cmd, "counter")) // Counter read
 		{
 			// Reads from memory mapped Counter block
-			printf("Counter value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(MM_BUS_COUNTER_0_BASE));
+			//printf("Counter value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(MM_BUS_COUNTER_0_BASE));
 
 		}
 
@@ -207,7 +207,7 @@ int main()
 		{
 			scanf(" %d", &value);
 			// Writes to counter block
-			IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_COUNTER_0_BASE, value);
+			//IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_COUNTER_0_BASE, value);
 			printf("Counter enabled: %d\n", value);
 		}
 
@@ -215,7 +215,7 @@ int main()
 		{
 			scanf(" %d", &value);
 			// Writes to memory mapped PIO block
-			IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_SEVEN_SEG_FOUR_DIGIT_0_BASE, value); //
+			//IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_SEVEN_SEG_FOUR_DIGIT_0_BASE, value); //
 			printf("HEX value:%d\n", value);
 
 		}
