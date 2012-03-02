@@ -6,8 +6,8 @@ entity audio_process is
   generic (audioWidth : natural := 24);  -- Default value
   port (
     -- Audio Interface
-    csi_AudioClk12MHz_clk 		  : in  std_logic;                      	-- 12MHz Clk
-    csi_AudioClk12MHz_reset_n : in  std_logic;                      	-- 12MHz Clk
+    csi_AudioClk12MHz_clk 		: in  std_logic;                      	-- 12MHz Clk
+    csi_AudioClk12MHz_reset_n   : in  std_logic;                      	-- 12MHz Clk
     coe_AudioIn_export       	: in  std_logic_vector(audioWidth-1 downto 0);  	-- To Codec
     coe_AudioOut_export      	: out std_logic_vector(audioWidth-1 downto 0);  	-- From Codec
     coe_AudioSync_export     	: in  std_logic;                       	-- 48KHz Sync
@@ -18,9 +18,9 @@ entity audio_process is
     avs_s1_write           		 : in    std_logic;   					-- Avalon wr
     avs_s1_read            		 : in    std_logic;   					-- Avalon rd
     avs_s1_chipselect      		 : in    std_logic;   					-- Avalon Chip Select
-    avs_s1_address         		 : in    std_logic_vector(11 downto 0);  -- Avalon address
-    avs_s1_writedata       		 : in    std_logic_vector(31 downto 0);  -- Avalon wr data
-    avs_s1_readdata        		 : out   std_logic_vector(31 downto 0)   -- Avalon rd data
+    avs_s1_address         		 : in    std_logic_vector(7 downto 0);  -- Avalon address
+    avs_s1_writedata       		 : in    std_logic_vector(15 downto 0);  -- Avalon wr data
+    avs_s1_readdata        		 : out   std_logic_vector(15 downto 0)   -- Avalon rd data
     );
 
 end audio_process;
@@ -28,8 +28,8 @@ end audio_process;
 architecture behaviour of audio_process is
 
   -- Constant Declarations
-  constant CI_ADDR_START    : std_logic_vector(11 downto 0) := X"000";
-  constant CI_ADDR_STATUS   : std_logic_vector(11 downto 0) := X"400";
+  constant CI_ADDR_START    : std_logic_vector(7 downto 0) := X"00";
+  constant CI_ADDR_STATUS   : std_logic_vector(7 downto 0) := X"40";
   constant CI_UNMUTED 	     : std_logic                     := '0';
   
   -- Internal signals
@@ -37,9 +37,6 @@ architecture behaviour of audio_process is
   signal mute_left          : std_logic;
   signal mute_right         : std_logic;
   
-  signal left_sample     	  : std_logic_vector(audioWidth-1 downto 0);
-  signal right_sample     	 : std_logic_vector(audioWidth-1 downto 0);
-
 begin  
   
   ------------------------------------------------------------------------
@@ -67,7 +64,7 @@ begin
         end if;
         
         if avs_s1_read = '1' then
-          if avs_s1_address = CI_ADDR_STATUS then
+          if avs_s1_address = CI_ADDR_START then
             avs_s1_readdata <= (0 => mute_right, 1 => mute_left, others => '0');
           else
             avs_s1_readdata <= (others => '0');
@@ -83,17 +80,20 @@ begin
   -- Process handling of audio clock, sampling on sync 
   ------------------------------------------------------------------------
   sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
-  begin 
+   variable left_sample : std_logic_vector(audioWidth-1 downto 0);
+   variable right_sample : std_logic_vector(audioWidth-1 downto 0);
+ begin 
     
     if csi_AudioClk12MHz_reset_n = '0' then        -- asynchronous reset (active low)
       
       coe_AudioOut_export <= (others => '0');
+		AudioSync_last <= '0';
       
-    elsif rising_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
+    elsif falling_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
     
       -- Left channel
       if coe_AudioSync_export = '1' and AudioSync_last = '0' then 
-        left_sample <=  coe_AudioIn_export; 
+        left_sample :=  coe_AudioIn_export; 
         if (mute_left = '1') then
           coe_AudioOut_export <= (others => '0');
         else   
@@ -103,7 +103,7 @@ begin
 
       -- Right channel
       if coe_AudioSync_export = '0' and AudioSync_last = '1' then 
-        right_sample <=  coe_AudioIn_export;    
+        right_sample :=  coe_AudioIn_export;    
         if (mute_right = '1') then
           coe_AudioOut_export <= (others => '0');
         else   
