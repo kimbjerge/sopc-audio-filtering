@@ -25,7 +25,7 @@ use work.txt_util.all;
 
 -------------------------------------------------------------------------------
 
-entity audio_process_tb is
+entity LMSFilter_tb is
 
   generic (
             audioWidth : natural := 24;
@@ -33,10 +33,10 @@ entity audio_process_tb is
             output_file: string := "output1024.txt"
             );
             
-end audio_process_tb;
+end LMSFilter_tb;
 
 -------------------------------------------------------------------------------
-architecture behaviour of audio_process_tb is
+architecture behaviour of LMSFilter_tb is
 
   component audio_process
     generic (
