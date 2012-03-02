@@ -180,19 +180,19 @@ int main()
 
 		if (!strcmp(cmd, "audio")) // Bit 0 = left, Bit 1 = right audio channel
 		{
-			//printf("audio value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE));
+			printf("audio value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE));
 		}
 
 		if (!strcmp(cmd, "mute")) // Bit 0 = left, Bit 1 = right audio channel
 		{
 			scanf(" %d", &value);
-			//IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, value);
+			IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, value);
 			printf("mute %d\n", value);
 		}
 
 		if (!strcmp(cmd, "unmute"))
 		{
-			//IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, 0);
+			IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, 0);
 			printf("unmute\n");
 		}
 
