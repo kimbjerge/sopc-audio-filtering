@@ -8,7 +8,7 @@ end;
 
 architecture bench of audio_process_tb_rune is
 
-  component audio_process
+  component audio_process2
     generic (audioWidth : natural := 24);
     port (
       csi_AudioClk12MHz_clk 		  : in  std_logic;
@@ -62,7 +62,7 @@ architecture bench of audio_process_tb_rune is
 begin
 
   -- Insert values for generic parameters !!
-  uut: audio_process generic map ( audioWidth                => audioWidth )
+  uut: audio_process2 generic map ( audioWidth                => audioWidth )
                         port map ( csi_AudioClk12MHz_clk     => csi_AudioClk12MHz_clk,
                                    csi_AudioClk12MHz_reset_n => csi_AudioClk12MHz_reset_n,
                                    coe_AudioIn_export        => coe_AudioIn_export,
@@ -151,7 +151,7 @@ end;
 
 configuration cfg_audio_process_tb of audio_process_tb_rune is
   for bench
-    for uut: audio_process
+    for uut: audio_process2
       -- Default configuration
     end for;
   end for;
@@ -159,7 +159,7 @@ end cfg_audio_process_tb;
 
 configuration cfg_audio_process_tb_behaviour of audio_process_tb_rune is
   for bench
-    for uut: audio_process
+    for uut: audio_process2
       use entity work.audio_process2(behaviour);
     end for;
   end for;
