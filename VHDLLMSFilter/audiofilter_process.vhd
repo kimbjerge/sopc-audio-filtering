@@ -95,7 +95,7 @@ begin
   ------------------------------------------------------------------------
   -- Process handling of audio clock, sampling on sync 
   ------------------------------------------------------------------------
-  sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
+sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
    variable left_sample : std_logic_vector(audioWidth-1 downto 0);
    variable right_sample : std_logic_vector(audioWidth-1 downto 0);
    variable filtered_data_temp : prod_type;
@@ -136,8 +136,8 @@ begin
           
         if (mute_left = '1') then
           coe_AudioOut_export <= (others => '0');
-          --coe_AudioOut_export <= left_sample;
         else  
+          --coe_AudioOut_export <= left_sample;
           coe_AudioOut_export <= std_logic_vector(filtered_data_temp(audioWidth-1 downto 0));     
         end if;
       end if;

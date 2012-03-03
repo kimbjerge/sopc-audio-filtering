@@ -32,8 +32,10 @@ entity audiofilter_tb is
 
   generic (
             audioWidth : natural := 24;
-            leftin_name: string := "leftin.txt";
-            rightin_name: string := "rightin.txt";
+            leftin_name: string := "NoiseSignalHex.txt";
+            rightin_name: string := "NoiseSignalHex.txt";
+            --leftin_name: string := "leftin.txt";
+            --rightin_name: string := "rightin.txt";
             leftout_name: string := "leftout.txt";
             rightout_name: string := "rightout.txt"
             );
@@ -90,7 +92,6 @@ architecture behaviour of audiofilter_tb is
   constant period12M : time := 80 ns;
   constant period48K : time := 20.833 us;
   
-
 begin  -- behaviour
 
   -- component instantiation
@@ -159,24 +160,14 @@ begin  -- behaviour
       writeline(leftoutfile, line);
 
       wait until Clk48KHz = '0';  -- Right channel
-      readline(leftinfile, line); -- read next text line from file
+      readline(rightinfile, line); -- read next text line from file
       read(line, data, 16); -- convert hex (16) numbers to integer value
       Audioin <= std_logic_vector(TO_SIGNED(data, 24)); -- convert to audio 24 bit       
       data := TO_INTEGER(signed(AudioOut));
       write(line, data, right, 0, decimal, false);
-      writeline(leftoutfile, line);
+      writeline(rightoutfile, line);
       
     end loop;
-
-    -- Wait for last sample
-    wait until Clk48KHz = '1';  -- Left channel
-    data := TO_INTEGER(signed(AudioOut));
-    write(line, data, right, 0, decimal, false);
-    writeline(leftoutfile, line);
-    wait until Clk48KHz = '0';  -- Right channel
-    data := TO_INTEGER(signed(AudioOut));
-    write(line, data, right, 0, decimal, false);
-    writeline(leftoutfile, line);
    
     
     file_close(leftinfile);  
