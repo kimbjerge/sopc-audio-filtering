@@ -3,9 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
  
 entity audio_process is
-  generic (filterOrder : natural := 10;
-           coefWidth : natural := 8; -- see excel sheet
-           audioWidth : natural := 24);  -- Default value
+  generic (audioWidth : natural := 24);  -- Default value
   port (
     -- Audio Interface
     csi_AudioClk12MHz_clk 		: in  std_logic;                      	-- 12MHz Clk
@@ -39,20 +37,9 @@ architecture behaviour of audio_process is
   signal mute_left          : std_logic;
   signal mute_right         : std_logic;
   
-  subtype coeff_type is integer range -128 to 127;
-  type coeff_array_type is array (0 to filterOrder/2) of coeff_type;
+  signal left_sample     	  : std_logic_vector(audioWidth-1 downto 0);
+  signal right_sample     	 : std_logic_vector(audioWidth-1 downto 0);
 
-  subtype tap_type is signed(audioWidth-1 downto 0);
-  type tap_array_type is array (0 to filterOrder) of tap_type;
-
-  subtype prod_type is signed(audioWidth+coefWidth-1 downto 0);
-  type prod_array_type is array (0 to filterOrder/2) of prod_type;
-
-  constant coeff : coeff_array_type := (4, 8, 18, 32, 43, 47);
-  --constant coeff : coeff_array_type := (-1, -3, 0, 27, 73, 97);
-  signal tap     : tap_array_type;
-  signal prod    : prod_array_type;
-  
 begin  
   
   ------------------------------------------------------------------------
@@ -95,61 +82,33 @@ begin
   ------------------------------------------------------------------------
   -- Process handling of audio clock, sampling on sync 
   ------------------------------------------------------------------------
-sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
-   variable left_sample : std_logic_vector(audioWidth-1 downto 0);
-   variable right_sample : std_logic_vector(audioWidth-1 downto 0);
-   variable filtered_data_temp : prod_type;
-   variable temp : tap_type;
-   variable result : prod_type;
-begin 
+  sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
+  begin 
     
     if csi_AudioClk12MHz_reset_n = '0' then        -- asynchronous reset (active low)
-      for tap_no in filterOrder downto 0 loop
-        tap(tap_no) <= (others => '0');
-      end loop;   
-      coe_AudioOut_export <= (others => '0');
-		  AudioSync_last <= '0';
       
-    elsif falling_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
+      coe_AudioOut_export <= (others => '0');
+      AudioSync_last <= '0';
+      
+    elsif rising_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
     
       -- Left channel
       if coe_AudioSync_export = '1' and AudioSync_last = '0' then 
-        left_sample :=  coe_AudioIn_export; 
-        
-        for tap_no in filterOrder downto 1 loop
-          tap(tap_no) <= tap(tap_no - 1);
-        end loop;
-        tap(0) <= shift_right(signed(left_sample), 1); -- Use only 23 bits of audio sample
-   
-        for tap_no in (filterOrder/2)-1 downto 0 loop
-          temp := tap(tap_no) + tap(filterOrder - tap_no);
-          prod(tap_no) <= to_signed(coeff(tap_no), coefWidth) * temp;
-        end loop; 
-        prod(filterOrder/2) <= to_signed(coeff(filterOrder/2), coefWidth) * tap(filterOrder/2);
-   
-        result := (others => '0');
-        for tap_no in (filterOrder/2) downto 0 loop
-          result := result + prod(tap_no);      
-        end loop; 
-   
-        filtered_data_temp := shift_right(result, 8);
-          
+        left_sample <=  coe_AudioIn_export; 
         if (mute_left = '1') then
           coe_AudioOut_export <= (others => '0');
-        else  
-          --coe_AudioOut_export <= left_sample;
-          coe_AudioOut_export <= std_logic_vector(filtered_data_temp(audioWidth-1 downto 0));     
+        else   
+          coe_AudioOut_export <= left_sample;     
         end if;
       end if;
 
       -- Right channel
       if coe_AudioSync_export = '0' and AudioSync_last = '1' then 
-        right_sample :=  coe_AudioIn_export;    
+        right_sample <=  coe_AudioIn_export;    
         if (mute_right = '1') then
           coe_AudioOut_export <= (others => '0');
         else   
           coe_AudioOut_export <= right_sample;     
-          --coe_AudioOut_export <= std_logic_vector(filtered_data_temp(audioWidth-1 downto 0));     
         end if;
       end if;
       
