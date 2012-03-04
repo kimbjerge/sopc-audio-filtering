@@ -55,7 +55,7 @@ architecture behaviour of audiolmsfilter is
   --constant const_coeff : coeff_array_type := 
   --(X"000004", X"000008", X"000012", X"000020", X"00002B", X"00002F", X"00002B", X"000020", X"000012", X"000008", X"000004");
   signal tap     : tap_array_type;
-  --signal wk_s    : tap_array_type;
+  signal wk_s    : tap_array_type;
   signal prod    : prod_array_type;
   --signal error   : tap_type;
   
@@ -107,7 +107,7 @@ sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
    variable result : prod_type;
    variable filtered_result : prod_type;
    variable wk_i : signed((2*audioWidth)-1 downto 0);
-   variable wk_si : tap_type;
+   --variable wk_si : tap_type;
    variable error : tap_type;
    variable wk_ii : signed(audioWidth+coefWidth-1 downto 0);
 begin 
@@ -118,7 +118,7 @@ begin
         coeff(tap_no) <= (others => '0');
         tap(tap_no) <= (others => '0');
         prod(tap_no) <= (others => '0');
-        --wk_s(tap_no) <= (others => '0');
+        wk_s(tap_no) <= (others => '0');
       end loop;   
 		  noise_sample := (others => '0');
 		  sound_sample := (others => '0');
@@ -155,10 +155,10 @@ begin
         -- Third+forth stage performs adjust LMS algorithm of weights, 2 stages pipelining        
         for tap_no in filterOrder downto 0 loop
           wk_i := error * tap(tap_no);
-          --wk_s(tap_no) <= resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
-          --wk_ii := ADPT_STEP * wk_s(tap_no);
-          wk_si := resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
-          wk_ii := ADPT_STEP * wk_si;
+          wk_s(tap_no) <= resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
+          wk_ii := ADPT_STEP * wk_s(tap_no);
+          --wk_si := resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
+          --wk_ii := ADPT_STEP * wk_si;
           coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, adaptWidth), coefWidth); -- Second pipeline (MAC+shift)
         end loop;
           
