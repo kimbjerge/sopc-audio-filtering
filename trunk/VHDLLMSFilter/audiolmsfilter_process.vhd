@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
  
-entity audiofilter_process is
+entity audiolmsfilter_process is
   generic (filterOrder : natural := 10;
            coefWidth : natural := 8; -- see excel sheet
            audioWidth : natural := 24);  -- Default value
@@ -25,9 +25,9 @@ entity audiofilter_process is
     avs_s1_readdata        		 : out   std_logic_vector(15 downto 0)   -- Avalon rd data
     );
 
-end audiofilter_process;
+end audiolmsfilter_process;
 
-architecture behaviour of audiofilter_process is
+architecture behaviour of audiolmsfilter_process is
 
   -- Constant Declarations
   constant CI_ADDR_START    : std_logic_vector(7 downto 0) := X"00";
@@ -40,18 +40,17 @@ architecture behaviour of audiofilter_process is
   signal mute_right         : std_logic;
   
   subtype coeff_type is integer range -128 to 127;
-  type coeff_array_type is array (0 to filterOrder/2) of coeff_type;
-
-  subtype tap_type is signed(audioWidth-1 downto 0);
-  type tap_array_type is array (0 to filterOrder) of tap_type;
+  type coeff_array_type is array (0 to filterOrder) of coeff_type;
 
   subtype prod_type is signed(audioWidth+coefWidth-1 downto 0);
-  type prod_array_type is array (0 to filterOrder/2) of prod_type;
+  type prod_array_type is array (0 to filterOrder) of prod_type;
 
-  constant coeff : coeff_array_type := (4, 8, 18, 32, 43, 47);
-  --constant coeff : coeff_array_type := (-1, -3, 0, 27, 73, 97);
-  signal tap     : tap_array_type;
+  subtype sum_type is signed(audioWidth+coefWidth-1 downto 0);
+  type sum_array_type is array (0 to filterOrder) of sum_type;
+
+  constant coeff : coeff_array_type := (4, 8, 18, 32, 43, 47, 43, 32, 18, 8, 4);
   signal prod    : prod_array_type;
+  signal sum     : sum_array_type;
   
 begin  
   
@@ -97,15 +96,16 @@ begin
   ------------------------------------------------------------------------
 sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
    variable left_sample : std_logic_vector(audioWidth-1 downto 0);
+   variable x_n : signed(audioWidth-1 downto 0);
    variable right_sample : std_logic_vector(audioWidth-1 downto 0);
-   variable filtered_data_temp : prod_type;
-   variable temp : tap_type;
-   variable result : prod_type;
+   variable filtered_data_temp : sum_type;
+   variable result : sum_type;
 begin 
     
     if csi_AudioClk12MHz_reset_n = '0' then        -- asynchronous reset (active low)
       for tap_no in filterOrder downto 0 loop
-        tap(tap_no) <= (others => '0');
+        sum(tap_no) <= (others => '0');
+        prod(tap_no) <= (others => '0');
       end loop;   
       coe_AudioOut_export <= (others => '0');
 		  AudioSync_last <= '0';
@@ -114,24 +114,22 @@ begin
     
       -- Left channel
       if coe_AudioSync_export = '1' and AudioSync_last = '0' then 
+       
         left_sample :=  coe_AudioIn_export; 
+        x_n := shift_right(signed(left_sample), 1); -- Use only 23 bits of audio sample 
         
-        for tap_no in filterOrder downto 1 loop
-          tap(tap_no) <= tap(tap_no - 1);
+        -- Pipelined transposed FIR implementation
+        -- See slides "FPGA Signal Processing page 7
+        for tap_no in filterOrder downto 0 loop
+          prod(tap_no) <= x_n * to_signed(coeff(tap_no), coefWidth); -- Stage 0
         end loop;
-        tap(0) <= shift_right(signed(left_sample), 1); -- Use only 23 bits of audio sample
-   
-        for tap_no in (filterOrder/2)-1 downto 0 loop
-          temp := tap(tap_no) + tap(filterOrder - tap_no);
-          prod(tap_no) <= to_signed(coeff(tap_no), coefWidth) * temp;
-        end loop; 
-        prod(filterOrder/2) <= to_signed(coeff(filterOrder/2), coefWidth) * tap(filterOrder/2);
-   
-        result := (others => '0');
-        for tap_no in (filterOrder/2) downto 0 loop
-          result := result + prod(tap_no);      
-        end loop; 
-   
+
+        sum(filterOrder) <= prod(filterOrder);
+        for tap_no in filterOrder-1 downto 1 loop
+          sum(tap_no) <= sum(tap_no+1) + prod(tap_no+1); -- Stage 1
+        end loop;
+        
+        result := prod(0) + sum(1); -- Stage 3
         filtered_data_temp := shift_right(result, 8);
           
         if (mute_left = '1') then
