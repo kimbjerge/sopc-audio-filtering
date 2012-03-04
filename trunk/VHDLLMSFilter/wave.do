@@ -1,27 +1,23 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -format Logic /firfilter_iis2st_tb/reset_n
-add wave -noupdate -format Logic /firfilter_iis2st_tb/ast_clk
-add wave -noupdate -format Analog-Step -height 74 -max 47.0 -radix decimal /firfilter_iis2st_tb/ast_sink_data
-add wave -noupdate -format Logic /firfilter_iis2st_tb/ast_sink_ready
-add wave -noupdate -format Logic /firfilter_iis2st_tb/ast_sink_valid
-add wave -noupdate -format Literal /firfilter_iis2st_tb/ast_sink_error
-add wave -noupdate -format Literal /firfilter_iis2st_tb/ast_source_data
-add wave -noupdate -format Logic /firfilter_iis2st_tb/ast_source_ready
-add wave -noupdate -format Logic /firfilter_iis2st_tb/ast_source_valid
-add wave -noupdate -format Literal /firfilter_iis2st_tb/ast_source_error
-add wave -noupdate -format Logic /firfilter_iis2st_tb/adcdat
-add wave -noupdate -format Logic /firfilter_iis2st_tb/adclrck
-add wave -noupdate -format Logic /firfilter_iis2st_tb/dacdat
-add wave -noupdate -format Logic /firfilter_iis2st_tb/daclrck
-add wave -noupdate -format Logic /firfilter_iis2st_tb/bitclk
-add wave -noupdate -format Literal /firfilter_iis2st_tb/lefti2svalue
-add wave -noupdate -format Literal /firfilter_iis2st_tb/righti2svalue
-add wave -noupdate -format Literal /firfilter_iis2st_tb/adcvalue
-add wave -noupdate -format Literal -max 64.0 -radix decimal /firfilter_iis2st_tb/dacvalue
+add wave -noupdate /audiolmsfilter_tb/clock
+add wave -noupdate /audiolmsfilter_tb/reset
+add wave -noupdate /audiolmsfilter_tb/audioclk12mhz
+add wave -noupdate -format Analog-Step -height 74 -max 8970.0 -min -8885.0 /audiolmsfilter_tb/audioout
+add wave -noupdate -format Analog-Step -height 74 -max 27175.999999999996 -min -27256.0 /audiolmsfilter_tb/audioin
+add wave -noupdate /audiolmsfilter_tb/audiosync
+add wave -noupdate /audiolmsfilter_tb/avs_write
+add wave -noupdate /audiolmsfilter_tb/avs_read
+add wave -noupdate /audiolmsfilter_tb/avs_cs
+add wave -noupdate /audiolmsfilter_tb/avs_address
+add wave -noupdate /audiolmsfilter_tb/avs_writedata
+add wave -noupdate /audiolmsfilter_tb/avs_readdata
+add wave -noupdate /audiolmsfilter_tb/clk
+add wave -noupdate /audiolmsfilter_tb/clk12mhz
+add wave -noupdate /audiolmsfilter_tb/clk48khz
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {208552 ns} 0}
-configure wave -namecolwidth 287
+WaveRestoreCursors {{Cursor 1} {770840000 ps} 0}
+configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
@@ -33,6 +29,6 @@ configure wave -gridoffset 0
 configure wave -gridperiod 1
 configure wave -griddelta 40
 configure wave -timeline 0
-configure wave -timelineunits ns
+configure wave -timelineunits ps
 update
-WaveRestoreZoom {0 ns} {986624 ns}
+WaveRestoreZoom {0 ps} {10500 us}
