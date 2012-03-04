@@ -28,7 +28,7 @@ use work.io_utils.all;
 
 -------------------------------------------------------------------------------
 
-entity audiolmsfilter_tb is
+entity audiotransposedfilter_tb is
 
   generic (
             audioWidth : natural := 24;
@@ -36,16 +36,16 @@ entity audiolmsfilter_tb is
             rightin_name: string := "NoiseSignalHex.txt";
             --leftin_name: string := "leftin.txt";
             --rightin_name: string := "rightin.txt";
-            leftout_name: string := "leftoutlms.txt";
-            rightout_name: string := "rightoutlms.txt"
+            leftout_name: string := "leftout_transposed.txt";
+            rightout_name: string := "rightout_transposed.txt"
             );
             
-end audiolmsfilter_tb;
+end audiotransposedfilter_tb;
 
 -------------------------------------------------------------------------------
-architecture behaviour of audiolmsfilter_tb is
+architecture behaviour of audiotransposedfilter_tb is
 
-  component audiolmsfilter_process
+  component audiotransposedfilter
     generic (
       audioWidth : natural
       );    
@@ -95,7 +95,7 @@ architecture behaviour of audiolmsfilter_tb is
 begin  -- behaviour
 
   -- component instantiation
-  DUT: audiolmsfilter_process
+  DUT: audiotransposedfilter
     generic map (
       audioWidth => audioWidth
       )    
