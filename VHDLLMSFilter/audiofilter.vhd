@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
  
-entity audiofilter_process is
+entity audiofilter is
   generic (filterOrder : natural := 10;
            coefWidth : natural := 8; -- see excel sheet
            audioWidth : natural := 24);  -- Default value
@@ -25,9 +25,9 @@ entity audiofilter_process is
     avs_s1_readdata        		 : out   std_logic_vector(15 downto 0)   -- Avalon rd data
     );
 
-end audiofilter_process;
+end audiofilter;
 
-architecture behaviour of audiofilter_process is
+architecture behaviour of audiofilter is
 
   -- Constant Declarations
   constant CI_ADDR_START    : std_logic_vector(7 downto 0) := X"00";

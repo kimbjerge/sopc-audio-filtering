@@ -45,7 +45,7 @@ end audiolmsfilter_tb;
 -------------------------------------------------------------------------------
 architecture behaviour of audiolmsfilter_tb is
 
-  component audiolmsfilter_process
+  component audiolmsfilter
     generic (
       audioWidth : natural
       );    
@@ -95,7 +95,7 @@ architecture behaviour of audiolmsfilter_tb is
 begin  -- behaviour
 
   -- component instantiation
-  DUT: audiolmsfilter_process
+  DUT: audiolmsfilter
     generic map (
       audioWidth => audioWidth
       )    
