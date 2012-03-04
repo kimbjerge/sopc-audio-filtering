@@ -15,10 +15,10 @@ title('Noise')
 
 figure(3)
 load 'leftout.txt'
-load 'leftoutlms.txt'
+load 'leftout_transposed.txt'
 hold on
 plot(leftout,'b')
-plot(leftoutlms,'r')
+plot(leftout_transposed,'r')
 hold off
 xlabel('Sample N')
 ylabel('Fixed point')
@@ -26,10 +26,10 @@ title('Left channel')
 
 figure(4)
 load 'rightout.txt'
-load 'rightoutlms.txt'
+load 'rightout_transposed.txt'
 hold on
 plot(rightout,'b')
-plot(rightoutlms,'r')
+plot(rightout_transposed,'r')
 hold off
 xlabel('Sample N')
 ylabel('Fixed point')
