@@ -45,7 +45,7 @@ end audiofilter_tb;
 -------------------------------------------------------------------------------
 architecture behaviour of audiofilter_tb is
 
-  component audiofilter_process
+  component audiofilter
     generic (
       audioWidth : natural
       );    
@@ -95,7 +95,7 @@ architecture behaviour of audiofilter_tb is
 begin  -- behaviour
 
   -- component instantiation
-  DUT: audiofilter_process
+  DUT: audiofilter
     generic map (
       audioWidth => audioWidth
       )    
