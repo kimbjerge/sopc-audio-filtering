@@ -4,7 +4,8 @@ use ieee.numeric_std.all;
  
 entity audiolmsfilter is
   generic (filterOrder : natural := 10;
-           coefWidth : natural := 24; 
+           coefWidth : natural := 24;
+           adaptWidth : natural := 15; 
            audioWidth : natural := 24);  -- Default value
   port (
     -- Audio Interface
@@ -54,9 +55,9 @@ architecture behaviour of audiolmsfilter is
   --constant const_coeff : coeff_array_type := 
   --(X"000004", X"000008", X"000012", X"000020", X"00002B", X"00002F", X"00002B", X"000020", X"000012", X"000008", X"000004");
   signal tap     : tap_array_type;
-  signal wk_s    : tap_array_type;
+  --signal wk_s    : tap_array_type;
   signal prod    : prod_array_type;
-  signal error   : tap_type;
+  --signal error   : tap_type;
   
 begin  
   
@@ -106,7 +107,8 @@ sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
    variable result : prod_type;
    variable filtered_result : prod_type;
    variable wk_i : signed((2*audioWidth)-1 downto 0);
-   --variable wk_si : tap_type;
+   variable wk_si : tap_type;
+   variable error : tap_type;
    variable wk_ii : signed(audioWidth+coefWidth-1 downto 0);
 begin 
     
@@ -116,10 +118,12 @@ begin
         coeff(tap_no) <= (others => '0');
         tap(tap_no) <= (others => '0');
         prod(tap_no) <= (others => '0');
-        wk_s(tap_no) <= (others => '0');
+        --wk_s(tap_no) <= (others => '0');
       end loop;   
+		  noise_sample := (others => '0');
 		  sound_sample := (others => '0');
-		  error <= (others => '0');
+		  error := (others => '0');
+		  --error <= (others => '0');
 		  AudioSync_last <= '0';
       coe_AudioOut_export <= (others => '0');
       
@@ -135,31 +139,35 @@ begin
         for tap_no in filterOrder downto 1 loop
           tap(tap_no) <= tap(tap_no - 1);
         end loop;
-        tap(0) <= shift_right(signed(noise_sample), 1); -- Use only 23 bits of audio sample
+        tap(0) <= signed(noise_sample);
+        --tap(0) <= shift_right(signed(noise_sample), 1); -- Use only 23 bits of audio sample
            
         -- Second stage performs MAC for FIR filter
         result := (others => '0');
         for tap_no in filterOrder downto 0 loop
           result := (coeff(tap_no) * tap(tap_no)) + result;
         end loop;      
-        filtered_result := shift_right(result, coefWidth-1); 
-        error <= shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
+        filtered_result := shift_right(result, adaptWidth); 
+        --error <= shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
+        --error := shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
+        error := signed(sound_sample) - resize(filtered_result, audioWidth);
         
         -- Third+forth stage performs adjust LMS algorithm of weights, 2 stages pipelining        
         for tap_no in filterOrder downto 0 loop
           wk_i := error * tap(tap_no);
-          wk_s(tap_no) <= resize(shift_right(wk_i, coefWidth-1), audioWidth); -- First pipeline (product+shift)
-          wk_ii := ADPT_STEP * wk_s(tap_no);
-          --wk_si := resize(shift_right(wk_i, coefWidth-1), audioWidth); -- First pipeline (product+shift)
-          --wk_ii := ADPT_STEP * wk_si;
-          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, coefWidth-1), coefWidth); -- Second pipeline (MAC+shift)
+          --wk_s(tap_no) <= resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
+          --wk_ii := ADPT_STEP * wk_s(tap_no);
+          wk_si := resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
+          wk_ii := ADPT_STEP * wk_si;
+          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, adaptWidth), coefWidth); -- Second pipeline (MAC+shift)
         end loop;
           
         if (mute_left = '1') then
           coe_AudioOut_export <= (others => '0');
         else  
           --coe_AudioOut_export <= std_logic_vector(filtered_result(audioWidth-1 downto 0));
-          coe_AudioOut_export <= std_logic_vector(error(audioWidth-1 downto 0));     
+          coe_AudioOut_export <= std_logic_vector(error(audioWidth-1 downto 0));
+          --coe_AudioOut_export <= noise_sample;     
         end if;
       end if;
 
@@ -169,8 +177,8 @@ begin
         if (mute_right = '1') then
           coe_AudioOut_export <= (others => '0');
         else   
-          --coe_AudioOut_export <= sound_sample;     
-          coe_AudioOut_export <= std_logic_vector(error(audioWidth-1 downto 0));     
+          coe_AudioOut_export <= sound_sample;     
+          --coe_AudioOut_export <= std_logic_vector(filtered_result(audioWidth-1 downto 0));     
         end if;
       end if;
       
