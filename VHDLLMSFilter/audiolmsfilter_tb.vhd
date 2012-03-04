@@ -32,8 +32,8 @@ entity audiolmsfilter_tb is
 
   generic (
             audioWidth : natural := 24;
-            leftin_name: string := "NoiseSignalHex.txt";
-            rightin_name: string := "NoiseSignalHex.txt";
+            leftin_name: string := "NoiseHex.txt"; -- Contains noise (x = LMS input)
+            rightin_name: string := "NoiseSignalHex.txt"; -- Contains noise + sound (d = LMS desigeret)
             --leftin_name: string := "leftin.txt";
             --rightin_name: string := "rightin.txt";
             leftout_name: string := "leftoutlms.txt";

@@ -2,9 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
  
-entity audiolmsfilter_process is
+entity audiolmsfilter is
   generic (filterOrder : natural := 10;
-           coefWidth : natural := 8; -- see excel sheet
+           coefWidth : natural := 24; 
            audioWidth : natural := 24);  -- Default value
   port (
     -- Audio Interface
@@ -25,32 +25,38 @@ entity audiolmsfilter_process is
     avs_s1_readdata        		 : out   std_logic_vector(15 downto 0)   -- Avalon rd data
     );
 
-end audiolmsfilter_process;
+end audiolmsfilter;
 
-architecture behaviour of audiolmsfilter_process is
+architecture behaviour of audiolmsfilter is
 
   -- Constant Declarations
   constant CI_ADDR_START    : std_logic_vector(7 downto 0) := X"00";
   constant CI_ADDR_STATUS   : std_logic_vector(7 downto 0) := X"40";
-  constant CI_UNMUTED 	     : std_logic                     := '0';
+  constant CI_UNMUTED 	     : std_logic                    := '0';
   
   -- Internal signals
   signal AudioSync_last     : std_logic;
   signal mute_left          : std_logic;
   signal mute_right         : std_logic;
   
-  subtype coeff_type is integer range -128 to 127;
+  subtype coeff_type is signed(coefWidth-1 downto 0);
   type coeff_array_type is array (0 to filterOrder) of coeff_type;
+
+  subtype tap_type is signed(audioWidth-1 downto 0);
+  type tap_array_type is array (0 to filterOrder) of tap_type;
 
   subtype prod_type is signed(audioWidth+coefWidth-1 downto 0);
   type prod_array_type is array (0 to filterOrder) of prod_type;
+  
+  constant ADPT_STEP : coeff_type := X"000083";  -- Format decimal 131 -  1.15 with 0.004 (float)
 
-  subtype sum_type is signed(audioWidth+coefWidth-1 downto 0);
-  type sum_array_type is array (0 to filterOrder) of sum_type;
-
-  constant coeff : coeff_array_type := (4, 8, 18, 32, 43, 47, 43, 32, 18, 8, 4);
+  signal coeff   : coeff_array_type;
+  --constant const_coeff : coeff_array_type := 
+  --(X"000004", X"000008", X"000012", X"000020", X"00002B", X"00002F", X"00002B", X"000020", X"000012", X"000008", X"000004");
+  signal tap     : tap_array_type;
+  signal wk_s    : tap_array_type;
   signal prod    : prod_array_type;
-  signal sum     : sum_array_type;
+  signal error   : tap_type;
   
 begin  
   
@@ -95,59 +101,76 @@ begin
   -- Process handling of audio clock, sampling on sync 
   ------------------------------------------------------------------------
 sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
-   variable left_sample : std_logic_vector(audioWidth-1 downto 0);
-   variable x_n : signed(audioWidth-1 downto 0);
-   variable right_sample : std_logic_vector(audioWidth-1 downto 0);
-   variable filtered_data_temp : sum_type;
-   variable result : sum_type;
+   variable noise_sample : std_logic_vector(audioWidth-1 downto 0);
+   variable sound_sample : std_logic_vector(audioWidth-1 downto 0);
+   variable result : prod_type;
+   variable filtered_result : prod_type;
+   variable wk_i : signed((2*audioWidth)-1 downto 0);
+   --variable wk_si : tap_type;
+   variable wk_ii : signed(audioWidth+coefWidth-1 downto 0);
 begin 
     
     if csi_AudioClk12MHz_reset_n = '0' then        -- asynchronous reset (active low)
       for tap_no in filterOrder downto 0 loop
-        sum(tap_no) <= (others => '0');
+        --coeff(tap_no) <= const_coeff(tap_no);
+        coeff(tap_no) <= (others => '0');
+        tap(tap_no) <= (others => '0');
         prod(tap_no) <= (others => '0');
+        wk_s(tap_no) <= (others => '0');
       end loop;   
-      coe_AudioOut_export <= (others => '0');
+		  sound_sample := (others => '0');
+		  error <= (others => '0');
 		  AudioSync_last <= '0';
+      coe_AudioOut_export <= (others => '0');
       
     elsif falling_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
     
       -- Left channel
       if coe_AudioSync_export = '1' and AudioSync_last = '0' then 
        
-        left_sample :=  coe_AudioIn_export; 
-        x_n := shift_right(signed(left_sample), 1); -- Use only 23 bits of audio sample 
-        
-        -- Pipelined transposed FIR implementation
-        -- See slides "FPGA Signal Processing page 7
-        for tap_no in filterOrder downto 0 loop
-          prod(tap_no) <= x_n * to_signed(coeff(tap_no), coefWidth); -- Stage 0
-        end loop;
+        noise_sample :=  coe_AudioIn_export; -- Noise signal
 
-        sum(filterOrder) <= prod(filterOrder);
-        for tap_no in filterOrder-1 downto 1 loop
-          sum(tap_no) <= sum(tap_no+1) + prod(tap_no+1); -- Stage 1
+        -- Direct FIR filter pipelined - 2 stages   
+        -- First stage shift delayline
+        for tap_no in filterOrder downto 1 loop
+          tap(tap_no) <= tap(tap_no - 1);
         end loop;
+        tap(0) <= shift_right(signed(noise_sample), 1); -- Use only 23 bits of audio sample
+           
+        -- Second stage performs MAC for FIR filter
+        result := (others => '0');
+        for tap_no in filterOrder downto 0 loop
+          result := (coeff(tap_no) * tap(tap_no)) + result;
+        end loop;      
+        filtered_result := shift_right(result, coefWidth-1); 
+        error <= shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
         
-        result := prod(0) + sum(1); -- Stage 3
-        filtered_data_temp := shift_right(result, 8);
+        -- Third+forth stage performs adjust LMS algorithm of weights, 2 stages pipelining        
+        for tap_no in filterOrder downto 0 loop
+          wk_i := error * tap(tap_no);
+          wk_s(tap_no) <= resize(shift_right(wk_i, coefWidth-1), audioWidth); -- First pipeline (product+shift)
+          wk_ii := ADPT_STEP * wk_s(tap_no);
+          --wk_si := resize(shift_right(wk_i, coefWidth-1), audioWidth); -- First pipeline (product+shift)
+          --wk_ii := ADPT_STEP * wk_si;
+          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, coefWidth-1), coefWidth); -- Second pipeline (MAC+shift)
+        end loop;
           
         if (mute_left = '1') then
           coe_AudioOut_export <= (others => '0');
         else  
-          --coe_AudioOut_export <= left_sample;
-          coe_AudioOut_export <= std_logic_vector(filtered_data_temp(audioWidth-1 downto 0));     
+          --coe_AudioOut_export <= std_logic_vector(filtered_result(audioWidth-1 downto 0));
+          coe_AudioOut_export <= std_logic_vector(error(audioWidth-1 downto 0));     
         end if;
       end if;
 
       -- Right channel
       if coe_AudioSync_export = '0' and AudioSync_last = '1' then 
-        right_sample :=  coe_AudioIn_export;    
+        sound_sample :=  coe_AudioIn_export;    
         if (mute_right = '1') then
           coe_AudioOut_export <= (others => '0');
         else   
-          --coe_AudioOut_export <= right_sample;     
-          coe_AudioOut_export <= std_logic_vector(filtered_data_temp(audioWidth-1 downto 0));     
+          --coe_AudioOut_export <= sound_sample;     
+          coe_AudioOut_export <= std_logic_vector(error(audioWidth-1 downto 0));     
         end if;
       end if;
       
