@@ -31,7 +31,7 @@ architecture behaviour of audiolmsfilter is
 
   -- Constant Declarations
   constant CI_ADDR_START    : std_logic_vector(7 downto 0) := X"00";
-  constant CI_ADDR_STATUS   : std_logic_vector(7 downto 0) := X"40";
+  constant CI_ADDR_ADPT     : std_logic_vector(7 downto 0) := X"02";
   constant CI_UNMUTED 	     : std_logic                    := '0';
   
   -- Internal signals
@@ -50,8 +50,9 @@ architecture behaviour of audiolmsfilter is
   
   --constant ADPT_STEP : coeff_type := X"000083";  -- Format decimal 131 -  1.15 with 0.004 (float)
   --constant ADPT_STEP : coeff_type := X"008312";  -- Format decimal 33554 -  1.23 with 0.004 (float)
-  constant ADPT_STEP : coeff_type := X"010624";  -- Format decimal 67108 -  1.23 with 0.008 (float)
+  constant CI_ADPT_STEP : coeff_type := X"010624";  -- Format decimal 67108 -  1.23 with 0.008 (float)
 
+  signal adptStep : coeff_type;
   signal coeff   : coeff_array_type;
   --constant const_coeff : coeff_array_type := 
   --(X"000004", X"000008", X"000012", X"000020", X"00002B", X"00002F", X"00002B", X"000020", X"000012", X"000008", X"000004");
@@ -72,6 +73,7 @@ begin
     if csi_clockreset_reset_n = '0' then  -- asynchronous reset (active low)
       mute_left <= CI_UNMUTED;
       mute_right <= CI_UNMUTED;
+      adptStep <= CI_ADPT_STEP;
       
     elsif csi_clockreset_clk'event and csi_clockreset_clk = '1' then  -- rising clock edge
           
@@ -81,16 +83,21 @@ begin
             when CI_ADDR_START => 
                 mute_right <= avs_s1_writedata(0);
                 mute_left <= avs_s1_writedata(1);
+            when CI_ADDR_ADPT =>
+                adptStep <= resize(signed(avs_s1_writedata), coefWidth);
             when others  => null;
           end case;
         end if;
         
         if avs_s1_read = '1' then
-          if avs_s1_address = CI_ADDR_START then
-            avs_s1_readdata <= (0 => mute_right, 1 => mute_left, others => '0');
-          else
-            avs_s1_readdata <= (others => '0');
-          end if;
+          case avs_s1_address is
+            when CI_ADDR_START =>
+              avs_s1_readdata <= (0 => mute_right, 1 => mute_left, others => '0');
+            when CI_ADDR_ADPT =>
+              avs_s1_readdata <= std_logic_vector(adptStep(15 downto 0));   
+            when others =>
+              avs_s1_readdata <= (others => '0');
+          end case;
         end if;
       end if;
       
@@ -153,7 +160,7 @@ begin
         for tap_no in filterOrder downto 0 loop
           wk_i := error * tap(tap_no);
           wk_s(tap_no) <= resize(shift_right(wk_i, audioWidth-1), audioWidth); -- First pipeline (product+shift)
-          wk_ii := ADPT_STEP * wk_s(tap_no);
+          wk_ii := adptStep * wk_s(tap_no);
           coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, audioWidth-1), coefWidth); -- Second pipeline (MAC+shift)
         end loop;
           
