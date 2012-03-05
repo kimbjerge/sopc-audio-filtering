@@ -43,6 +43,10 @@ void initCodec(void){
 
 }
 
+// Address of LMS filter setup
+#define MUTE_ADDR   	0
+#define LMS_ADPT_ADDR   1
+
 #define CMD_LEN 100
 
 #define STR_EXPAND(tok) #tok
@@ -170,8 +174,8 @@ int main()
 
 	// Nios II Console welcome text
 	printf("Demo SoPC program\n");
-	printf("Enter command: ledr <value> | ledg <value> | sw | lcd <text> | mult <value>\n");
-	printf("               mute <value> | unmute | audio \n\n");
+	printf("Enter command: ledr <value> | ledg <value>  | sw | lcd <text> | mult <value>\n");
+	printf("               mute <value> | adapt <value> | audio \n\n");
 
 	while(1)
 	{
@@ -180,20 +184,22 @@ int main()
 
 		if (!strcmp(cmd, "audio")) // Bit 0 = left, Bit 1 = right audio channel
 		{
-			printf("audio value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE));
+			printf("mute value: %d\n", IORD(AUDIO_PROCESS_0_BASE, MUTE_ADDR));
+			printf("adapt value: %04X\n", IORD(AUDIO_PROCESS_0_BASE, LMS_ADPT_ADDR));
 		}
 
 		if (!strcmp(cmd, "mute")) // Bit 0 = left, Bit 1 = right audio channel
 		{
 			scanf(" %d", &value);
-			IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, value);
+			IOWR(AUDIO_PROCESS_0_BASE, MUTE_ADDR, value);
 			printf("mute %d\n", value);
 		}
 
-		if (!strcmp(cmd, "unmute"))
+		if (!strcmp(cmd, "adapt"))
 		{
-			IOWR_ALTERA_AVALON_PIO_DATA(AUDIO_PROCESS_0_BASE, 0);
-			printf("unmute\n");
+			scanf(" %d", &value);
+			IOWR(AUDIO_PROCESS_0_BASE, LMS_ADPT_ADDR, value);
+			printf("adapt set to %d\n", value);
 		}
 
 		if (!strcmp(cmd, "counter")) // Counter read
