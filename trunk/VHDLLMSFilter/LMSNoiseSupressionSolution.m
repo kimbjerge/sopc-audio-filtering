@@ -22,7 +22,7 @@ noise = wgn(N,1,0)';     % generate random noise
 dn = 0.3*sn1+0.3*sn2+0.3*sn3+0.01*noise; % mixing desired sinewaves
 xn = 0.4*sn1+0.1*noise;  % generate x(n) with noise and undesired signal
 
-L = 64;                  % filter length
+L = 11;                  % filter length
 mu = 0.004;              % step size mu
 
 [y,e] = LMSFilter(xn,dn,L,mu); % LMS Filter function
