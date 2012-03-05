@@ -5,15 +5,14 @@ use ieee.numeric_std.all;
 entity audiolmsfilter is
   generic (filterOrder : natural := 10;
            coefWidth : natural := 24;
-           adaptWidth : natural := 15; 
-           audioWidth : natural := 24);  -- Default value
+           audioWidth : natural := 24);  -- Default values
   port (
     -- Audio Interface
-    csi_AudioClk12MHz_clk 		: in  std_logic;                      	-- 12MHz Clk
-    csi_AudioClk12MHz_reset_n   : in  std_logic;                      	-- 12MHz Clk
+    csi_AudioClk12MHz_clk 		: in  std_logic;                      	            -- 12MHz Clk
+    csi_AudioClk12MHz_reset_n   : in  std_logic;                      	        -- 12MHz Clk
     coe_AudioIn_export       	: in  std_logic_vector(audioWidth-1 downto 0);  	-- To Codec
     coe_AudioOut_export      	: out std_logic_vector(audioWidth-1 downto 0);  	-- From Codec
-    coe_AudioSync_export     	: in  std_logic;                       	-- 48KHz Sync
+    coe_AudioSync_export     	: in  std_logic;                       	         -- 48KHz Sync
     
     -- Avalon Interface
     csi_clockreset_clk     		 : in    std_logic;   					-- Avalon Clk 50 Mhz
@@ -49,7 +48,9 @@ architecture behaviour of audiolmsfilter is
   subtype prod_type is signed(audioWidth+coefWidth-1 downto 0);
   type prod_array_type is array (0 to filterOrder) of prod_type;
   
-  constant ADPT_STEP : coeff_type := X"000083";  -- Format decimal 131 -  1.15 with 0.004 (float)
+  --constant ADPT_STEP : coeff_type := X"000083";  -- Format decimal 131 -  1.15 with 0.004 (float)
+  --constant ADPT_STEP : coeff_type := X"008312";  -- Format decimal 33554 -  1.23 with 0.004 (float)
+  constant ADPT_STEP : coeff_type := X"010624";  -- Format decimal 67108 -  1.23 with 0.008 (float)
 
   signal coeff   : coeff_array_type;
   --constant const_coeff : coeff_array_type := 
@@ -57,7 +58,6 @@ architecture behaviour of audiolmsfilter is
   signal tap     : tap_array_type;
   signal wk_s    : tap_array_type;
   signal prod    : prod_array_type;
-  --signal error   : tap_type;
   
 begin  
   
@@ -107,7 +107,6 @@ sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
    variable result : prod_type;
    variable filtered_result : prod_type;
    variable wk_i : signed((2*audioWidth)-1 downto 0);
-   --variable wk_si : tap_type;
    variable error : tap_type;
    variable wk_ii : signed(audioWidth+coefWidth-1 downto 0);
 begin 
@@ -123,7 +122,6 @@ begin
 		  noise_sample := (others => '0');
 		  sound_sample := (others => '0');
 		  error := (others => '0');
-		  --error <= (others => '0');
 		  AudioSync_last <= '0';
       coe_AudioOut_export <= (others => '0');
       
@@ -147,19 +145,16 @@ begin
         for tap_no in filterOrder downto 0 loop
           result := (coeff(tap_no) * tap(tap_no)) + result;
         end loop;      
-        filtered_result := shift_right(result, adaptWidth); 
-        --error <= shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
+        filtered_result := shift_right(result, audioWidth-1); 
         --error := shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
         error := signed(sound_sample) - resize(filtered_result, audioWidth);
         
         -- Third+forth stage performs adjust LMS algorithm of weights, 2 stages pipelining        
         for tap_no in filterOrder downto 0 loop
           wk_i := error * tap(tap_no);
-          wk_s(tap_no) <= resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
+          wk_s(tap_no) <= resize(shift_right(wk_i, audioWidth-1), audioWidth); -- First pipeline (product+shift)
           wk_ii := ADPT_STEP * wk_s(tap_no);
-          --wk_si := resize(shift_right(wk_i, adaptWidth), audioWidth); -- First pipeline (product+shift)
-          --wk_ii := ADPT_STEP * wk_si;
-          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, adaptWidth), coefWidth); -- Second pipeline (MAC+shift)
+          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, audioWidth-1), coefWidth); -- Second pipeline (MAC+shift)
         end loop;
           
         if (mute_left = '1') then
