@@ -19,8 +19,7 @@ entity UpSampler is
     
     -- sigma dalta converter --
     up_sampler_clk      : in  std_logic;  -- 1,536MHz = 48KHz * 32
-    outputPin           : out std_logic;  
-    outUpSampler			     : out std_logic_vector(inputWidth-1 downto 0));
+    outputPin           : out std_logic);
     
 end entity UpSampler;
 
@@ -51,7 +50,8 @@ architecture code of UpSampler is
   signal sigmaIn : signed(inputWidth downto 0);
   signal sigmaIntegratorLast : signed(inputWidth downto 0);
   signal sigmaDac : signed(inputWidth downto 0);
-    
+  signal outUpSampler : std_logic_vector(inputWidth-1 downto 0); 
+   
 begin
   
  Filter : process(up_sampler_clk, reset_n)
