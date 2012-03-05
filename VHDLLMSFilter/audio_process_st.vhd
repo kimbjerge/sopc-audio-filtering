@@ -52,9 +52,6 @@ architecture behaviour of audio_process_st is
   signal right_sample     	 : std_logic_vector(audioWidth-1 downto 0);  
   
   signal valid_high         : std_logic := '0';
-  
---  type state_type is (idle, step1);
---  signal state1 : state_type; 
 
 begin  
   
@@ -100,7 +97,7 @@ begin
   ------------------------------------------------------------------------
   sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
   
-  type state_type is (idle, step1);
+  type state_type is (idle, validHigh);
   variable valid_state : state_type;
   
   begin 
@@ -120,7 +117,7 @@ begin
           ast_source_data <= (others => '0');
         else   
           ast_source_data <= left_sample;    
-          valid_state := step1;
+          valid_state := validHigh;
           valid_high <= '1';
           ast_source_channel <= chNrLeft; 
         end if;
@@ -133,7 +130,7 @@ begin
           ast_source_data <= (others => '0');
         else   
           ast_source_data <= right_sample;
-          valid_state := step1;
+          valid_state := validHigh;
           ast_source_channel <= chNrRight;  
         end if;
       end if;
@@ -141,7 +138,7 @@ begin
       case valid_state is
         when idle =>
           ast_source_valid <= '0';
-        when step1 =>
+        when validHigh =>
           ast_source_valid <= '1';
           valid_state := idle;
       end case;
