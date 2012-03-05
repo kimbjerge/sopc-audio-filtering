@@ -31,10 +31,7 @@ architecture bench of audio_process_st2_tb is
       ast_source_channel        : out   std_logic_vector(2  downto 0);
       ast_sink_valid            : in   std_logic;
       ast_sink_data             : in   std_logic_vector(23 downto 0);
-      ast_sink_channel          : in   std_logic_vector(2  downto 0);
-      inFromUpSampler           : in   std_logic_vector(audioWidth-1 downto 0);
-      SigmaIn                   : in   std_logic;
-      up_sampler_clk            : in   std_logic    
+      ast_sink_channel          : in   std_logic_vector(2  downto 0)
       );
   end component;
 
@@ -57,7 +54,6 @@ architecture bench of audio_process_st2_tb is
   signal ast_sink_valid: std_logic;
   signal ast_sink_data: std_logic_vector(23 downto 0);
   signal ast_sink_channel: std_logic_vector(2 downto 0);
-  signal inFromUpSampler: std_logic_vector(audioWidth-1 downto 0);
   signal SigmaIn: std_logic;
   signal up_sampler_clk: std_logic ;
 
@@ -89,10 +85,7 @@ begin
                                     ast_source_channel        => ast_source_channel,
                                     ast_sink_valid            => ast_sink_valid,
                                     ast_sink_data             => ast_sink_data,
-                                    ast_sink_channel          => ast_sink_channel,
-                                    inFromUpSampler           => inFromUpSampler,
-                                    SigmaIn                   => SigmaIn,
-                                    up_sampler_clk            => up_sampler_clk );
+                                    ast_sink_channel          => ast_sink_channel);
                                     
     UpSampler_1: entity work.UpSampler
     port map (clk => csi_AudioClk12MHz_clk,
@@ -101,7 +94,6 @@ begin
               ast_sink_valid => ast_source_valid,
               ast_sink_channel => ast_source_channel,
               up_sampler_clk => up_sampler_clk,
-              outUpSampler => inFromUpSampler,
               outputPin => SigmaIn);                                    
                                     
 

@@ -30,13 +30,8 @@ entity audio_process_st2 is
     ast_source_channel        : out   std_logic_vector(2  downto 0);
     ast_sink_valid            : in   std_logic;
     ast_sink_data             : in   std_logic_vector(23 downto 0);
-    ast_sink_channel          : in   std_logic_vector(2  downto 0);
-    
-    -- for tb
-    inFromUpSampler           : in   std_logic_vector(audioWidth-1 downto 0);
-    SigmaIn                   : in   std_logic;
-    up_sampler_clk            : in   std_logic    
-    
+    ast_sink_channel          : in   std_logic_vector(2  downto 0)
+        
     );
 
 end audio_process_st2;
@@ -46,7 +41,7 @@ architecture behaviour of audio_process_st2 is
   -- Constant Declarations
   constant CI_ADDR_START    : std_logic_vector(7 downto 0) := X"00";
   constant CI_ADDR_STATUS   : std_logic_vector(7 downto 0) := X"40";
-  constant CI_UNMUTED 	     : std_logic                     := '0';
+  constant CI_UNMUTED 	     : std_logic                    := '0';
   
   -- Internal signals
   signal AudioSync_last     : std_logic;
@@ -56,7 +51,7 @@ architecture behaviour of audio_process_st2 is
   signal left_sample     	  : std_logic_vector(audioWidth-1 downto 0);
   signal right_sample     	 : std_logic_vector(audioWidth-1 downto 0);  
   
-  signal valid_high         : std_logic := '0';
+  signal valid_high         : std_logic;
 
 begin  
   
@@ -112,6 +107,7 @@ begin
       ast_source_data <= (others => '0');
       left_sample <= (others => '0');
       right_sample <= (others => '0');
+      valid_high <= '0';
       
     elsif rising_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
     
@@ -123,7 +119,6 @@ begin
         else   
           ast_source_data <= left_sample;    
           valid_state := validHigh;
-          valid_high <= '1';
           ast_source_channel <= chNrLeft; 
         end if;
       end if;
