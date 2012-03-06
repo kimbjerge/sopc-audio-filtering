@@ -26,10 +26,10 @@ entity audio_process_st2 is
     
     -- ST Bus
     ast_source_valid          : out   std_logic;
-    ast_source_data           : out   std_logic_vector(23 downto 0);
+    ast_source_data           : out   std_logic_vector(audioWidth-1 downto 0);
     ast_source_channel        : out   std_logic_vector(2  downto 0);
     ast_sink_valid            : in   std_logic;
-    ast_sink_data             : in   std_logic_vector(23 downto 0);
+    ast_sink_data             : in   std_logic_vector(audioWidth-1 downto 0);
     ast_sink_channel          : in   std_logic_vector(2  downto 0)
         
     );
@@ -153,7 +153,7 @@ begin
   begin
   if csi_AudioClk12MHz_reset_n = '0' then        -- asynchronous reset (active low)
       
-  coe_AudioOut_export <= (others => '0');
+    coe_AudioOut_export <= (others => '0');
       
   elsif rising_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge
     if ast_sink_valid = '1' then
