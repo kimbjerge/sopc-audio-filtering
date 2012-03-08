@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.11"
+    ComputedModelVersion    "1.12"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -26,9 +26,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "kbe"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Thu Mar 08 09:20:17 2012"
-  RTWModifiedTimeStamp	  253099212
-  ModelVersionFormat	  "1.%<AutoIncrement:11>"
+  LastModifiedDate	  "Thu Mar 08 10:21:01 2012"
+  RTWModifiedTimeStamp	  253102814
+  ModelVersionFormat	  "1.%<AutoIncrement:12>"
   ConfigurationManager	  "None"
   SampleTimeColors	  on
   SampleTimeAnnotations	  off
@@ -646,7 +646,7 @@ Model {
       SourceBlock	      "dspsrcs4/Sine Wave"
       SourceType	      "Sine Wave"
       Amplitude		      "[1 1]"
-      Frequency		      "[100 100]"
+      Frequency		      "[399 399]"
       Phase		      "[0 0]"
       SampleMode	      "Discrete"
       OutComplex	      "Real"

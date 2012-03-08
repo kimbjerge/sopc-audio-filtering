@@ -10,11 +10,9 @@ ENTITY delay_ram IS
 		clock: IN STD_LOGIC;
 		data: IN STD_LOGIC_VECTOR (bitWidth-1 DOWNTO 0);
 		write_addr: IN INTEGER RANGE 0 to ramSize-1;
-		read1_addr: IN INTEGER RANGE 0 to ramSize-1;
-		read2_addr: IN INTEGER RANGE 0 to ramSize-1;
+		read_addr: IN INTEGER RANGE 0 to ramSize-1;
 		we: IN STD_LOGIC;
-		q1: OUT STD_LOGIC_VECTOR (bitWidth-1  DOWNTO 0);
-		q2: OUT STD_LOGIC_VECTOR (bitWidth-1  DOWNTO 0)
+		q: OUT STD_LOGIC_VECTOR (bitWidth-1  DOWNTO 0)
 	);
 END delay_ram;
 
@@ -29,8 +27,7 @@ BEGIN
 			IF (we = '1') THEN
 				ram_block(write_addr) <= data;
 			END IF;
-			q1 <= ram_block(read1_addr);
-			q2 <= ram_block(read2_addr);
+			q <= ram_block(read_addr);
 		END IF;
 	END PROCESS;
 
