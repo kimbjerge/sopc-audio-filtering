@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.10"
+    ComputedModelVersion    "1.11"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -24,11 +24,11 @@ Model {
   Creator		  "KBE"
   UpdateHistory		  "UpdateHistoryNever"
   ModifiedByFormat	  "%<Auto>"
-  LastModifiedBy	  "KBE"
+  LastModifiedBy	  "kbe"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Wed Mar 07 22:30:52 2012"
-  RTWModifiedTimeStamp	  253060211
-  ModelVersionFormat	  "1.%<AutoIncrement:10>"
+  LastModifiedDate	  "Thu Mar 08 09:20:17 2012"
+  RTWModifiedTimeStamp	  253099212
+  ModelVersionFormat	  "1.%<AutoIncrement:11>"
   ConfigurationManager	  "None"
   SampleTimeColors	  on
   SampleTimeAnnotations	  off
@@ -111,7 +111,7 @@ Model {
 	  $ObjectID		  2
 	  Version		  "1.10.0"
 	  StartTime		  "0.0"
-	  StopTime		  "10.0"
+	  StopTime		  "100.0"
 	  AbsTol		  "auto"
 	  FixedStep		  "auto"
 	  InitialStep		  "auto"
@@ -635,7 +635,36 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "18"
+    SIDHighWatermark	    "19"
+    Block {
+      BlockType		      Reference
+      Name		      "LR Channels (Noise 50 Hz)"
+      SID		      "19"
+      Ports		      [0, 1]
+      Position		      [60, 163, 105, 207]
+      LibraryVersion	      "1.710"
+      SourceBlock	      "dspsrcs4/Sine Wave"
+      SourceType	      "Sine Wave"
+      Amplitude		      "[1 1]"
+      Frequency		      "[100 100]"
+      Phase		      "[0 0]"
+      SampleMode	      "Discrete"
+      OutComplex	      "Real"
+      CompMethod	      "Trigonometric fcn"
+      TableSize		      "Speed"
+      SampleTime	      "1/1000"
+      SamplesPerFrame	      "1"
+      ResetState	      "Restart at time zero"
+      additionalParams	      off
+      allowOverrides	      on
+      dataType		      "double"
+      wordLen		      "16"
+      udDataType	      "sfix(16)"
+      fracBitsMode	      "Best precision"
+      numFracBits	      "15"
+      OutDataTypeStr	      "double"
+      LastOutDataTypeStr      "double"
+    }
     Block {
       BlockType		      Reference
       Name		      "Manual Switch"
@@ -660,10 +689,39 @@ Model {
     }
     Block {
       BlockType		      Reference
+      Name		      "R Channel (Sound 400 Hz)"
+      SID		      "5"
+      Ports		      [0, 1]
+      Position		      [60, 238, 105, 282]
+      LibraryVersion	      "1.710"
+      SourceBlock	      "dspsrcs4/Sine Wave"
+      SourceType	      "Sine Wave"
+      Amplitude		      "[0 1]"
+      Frequency		      "[400 400]"
+      Phase		      "[0 0]"
+      SampleMode	      "Discrete"
+      OutComplex	      "Real"
+      CompMethod	      "Trigonometric fcn"
+      TableSize		      "Speed"
+      SampleTime	      "1/1000"
+      SamplesPerFrame	      "1"
+      ResetState	      "Restart at time zero"
+      additionalParams	      off
+      allowOverrides	      on
+      dataType		      "double"
+      wordLen		      "16"
+      udDataType	      "sfix(16)"
+      fracBitsMode	      "Best precision"
+      numFracBits	      "15"
+      OutDataTypeStr	      "double"
+      LastOutDataTypeStr      "double"
+    }
+    Block {
+      BlockType		      Reference
       Name		      "Random\nSource"
       SID		      "4"
       Ports		      [0, 1]
-      Position		      [65, 156, 100, 194]
+      Position		      [65, 41, 100, 79]
       LibraryVersion	      "1.710"
       UserDataPersistent      on
       UserData		      "DataTag0"
@@ -684,35 +742,6 @@ Model {
       SampFrame		      "1"
       DataType		      "Double"
       OutComplex	      "Real"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Sine Wave"
-      SID		      "5"
-      Ports		      [0, 1]
-      Position		      [60, 238, 105, 282]
-      LibraryVersion	      "1.710"
-      SourceBlock	      "dspsrcs4/Sine Wave"
-      SourceType	      "Sine Wave"
-      Amplitude		      "[1 1]"
-      Frequency		      "[50 200]"
-      Phase		      "[0 0]"
-      SampleMode	      "Discrete"
-      OutComplex	      "Real"
-      CompMethod	      "Trigonometric fcn"
-      TableSize		      "Speed"
-      SampleTime	      "1/1000"
-      SamplesPerFrame	      "1"
-      ResetState	      "Restart at time zero"
-      additionalParams	      off
-      allowOverrides	      on
-      dataType		      "double"
-      wordLen		      "16"
-      udDataType	      "sfix(16)"
-      fracBitsMode	      "Best precision"
-      numFracBits	      "15"
-      OutDataTypeStr	      "double"
-      LastOutDataTypeStr      "double"
     }
     Block {
       BlockType		      Sum
@@ -782,7 +811,7 @@ Model {
     }
     Line {
       Labels		      [0, 0]
-      SrcBlock		      "Sine Wave"
+      SrcBlock		      "R Channel (Sound 400 Hz)"
       SrcPort		      1
       Points		      [215, 0]
       DstBlock		      "Sum"
@@ -795,16 +824,17 @@ Model {
       DstPort		      1
     }
     Line {
-      Points		      [185, 185]
-      DstBlock		      "Manual Switch"
-      DstPort		      2
-    }
-    Line {
       SrcBlock		      "Random\nSource"
       SrcPort		      1
-      Points		      [40, 0; 0, -10]
+      Points		      [40, 0; 0, 105]
       DstBlock		      "Manual Switch"
       DstPort		      1
+    }
+    Line {
+      SrcBlock		      "LR Channels (Noise 50 Hz)"
+      SrcPort		      1
+      DstBlock		      "Manual Switch"
+      DstPort		      2
     }
     Annotation {
       Position		      [690, 282]
