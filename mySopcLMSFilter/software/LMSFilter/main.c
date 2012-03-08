@@ -176,7 +176,7 @@ int main()
 	// Nios II Console welcome text
 	printf("Demo SoPC program\n");
 	printf("Enter command: ledr <value> | ledg <value>  | sw | lcd <text> | mult <value>\n");
-	printf("               mute <value> | adapt <value> | bypass <value>  | audio \n\n");
+	printf("               mute <value> | adapt <value> | bypass <value>  | delay <value> | audio \n\n");
 
 	while(1)
 	{
@@ -187,10 +187,18 @@ int main()
 		{
 			printf("mute: %d\n", IORD(AUDIO_PROCESS_ST2_0_BASE, MUTE_ADDR));
 			printf("bypass: %d\n", IORD(AUDIOLMSFILTEROPT_ST_0_BASE, BYPASS_ADDR));
+			printf("delay: %d\n", IORD(AUDIODELAY_ST_0_BASE, BYPASS_ADDR));
 			printf("adapt: %04X\n", IORD(AUDIOLMSFILTEROPT_ST_0_BASE, LMS_ADPT_ADDR));
 		}
 
-		if (!strcmp(cmd, "bypass")) // Bit 0 = left, Bit 1 = right audio channel
+		if (!strcmp(cmd, "delay")) // Bit 0 = left, Bit 1 = right audio channel (1 delay off)
+		{
+			scanf(" %d", &value);
+			IOWR(AUDIODELAY_ST_0_BASE, BYPASS_ADDR, value);
+			printf("delay: %d\n", value);
+		}
+
+		if (!strcmp(cmd, "bypass")) // Bit 0 = left, Bit 1 = right audio channel (1 bypass LMS filter)
 		{
 			scanf(" %d", &value);
 			IOWR(AUDIOLMSFILTEROPT_ST_0_BASE, BYPASS_ADDR, value);
