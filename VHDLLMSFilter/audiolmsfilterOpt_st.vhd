@@ -57,9 +57,10 @@ architecture behaviour of audiolmsfilterOpt_st is
   subtype prod_type is signed(audioWidth+coefWidth-1 downto 0);
   type prod_array_type is array (0 to filterOrder) of prod_type;
   
-  constant CI_ADPT_STEP : coeff_type := X"008312";  -- Format decimal 33554 -  1.23 with 0.004 (float)
+  constant CI_ADPT_STEP : coeff_type := X"0020C4";  -- Format decimal 8388 -  1.23 with 0.001 (float)
+  --constant CI_ADPT_STEP : coeff_type := X"008312";  -- Format decimal 33554 -  1.23 with 0.004 (float)
   --constant CI_ADPT_STEP : coeff_type := X"010624";  -- Format decimal 67108 -  1.23 with 0.008 (float)
-
+  
   signal adptStep : coeff_type;
   signal coeff   : coeff_array_type;
   signal tap     : tap_array_type;
