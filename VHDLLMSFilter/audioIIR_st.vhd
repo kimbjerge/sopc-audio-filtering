@@ -75,6 +75,7 @@ architecture behaviour of audioIIR_st is
   signal coeff   : coeff_array_type;  
   
   -- Biquad taps
+  signal x0 : signed(audioWidth-1 downto 0);
   signal x1 : signed(audioWidth-1 downto 0);
   signal x2 : signed(audioWidth-1 downto 0);
   signal y1 : signed(audioWidth-1 downto 0);
@@ -218,6 +219,7 @@ begin
         r2 <= (others => '0');
         r3 <= (others => '0');
         result <= (others => '0');
+        x0 <= (others => '0');
         x1 <= (others => '0');
         x2 <= (others => '0');
         y1 <= (others => '0');
@@ -227,7 +229,7 @@ begin
     elsif rising_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
          
           -- Pipelined 10 stages of IIR filter
-          t1 <= coeff(0) * signed(left_input);
+          t1 <= coeff(0) * x0;
           t2 <= coeff(1) * x1;
           t3 <= coeff(2) * x2;
           t4 <= coeff(3) * y1;
@@ -235,12 +237,13 @@ begin
           r1 <= t1 + t2 + t3;
           r2 <= t4 + t5;
           r3 <= r1 - r2;
-          result <= shift_left(r3, audioWidth-1)(audioWidth-1 downto 0);
+          result <= shift_right(r3, audioWidth-1)(audioWidth-1 downto 0);
           
           -- For every new sample shift taps 
           if (left_valid = '1') then
             x2 <= x1;
-            x1 <= signed(left_input);
+            x1 <= x0;
+            x0 <= signed(left_input);
             y2 <= y1;
             y1 <= result;
             left_IIR <= std_logic_vector(result);
