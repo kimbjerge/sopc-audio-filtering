@@ -136,6 +136,22 @@ void multiMatrixHard(VectorArray A,VectorArray B, VectorArray P)
 
 }
 
+void displaySeg(int value)
+{
+	int valBcd;
+
+	if (value < 10)
+		valBcd = value;
+	else if (value < 100)
+		valBcd = value % 10 + (value/10)*16;
+	else if (value < 1000)
+		valBcd = value % 10 + ((value/10)%10)*16 + ((value/100)%10)*256;
+	else
+		valBcd = value % 10 + ((value/10)%10)*16 + ((value/100)%10)*256 + ((value/1000)%10)*4096;
+
+	// Writes to memory mapped BCD to Seven seg block
+	IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_SEVEN_SEG_FOUR_DIGIT_0_BASE, valBcd);
+}
 
 //////////////////////////////////////////////////////////
 
@@ -175,11 +191,14 @@ int main()
 
 	// Nios II Console welcome text
 	printf("Demo SoPC program\n");
-	printf("Enter command: ledr <value> | ledg <value>  | sw | lcd <text> | mult <value>\n");
+	printf("Enter command: ledr <value> | ledg <value>  | sw | lcd <text> | mult <value>  | seg <value>\n");
 	printf("               mute <value> | adapt <value> | bypass <value>  | delay <value> | audio \n\n");
 
 	while(1)
 	{
+		// Display LMS adaption value in 7 segment displays
+		displaySeg(IORD(AUDIOLMSFILTEROPT_ST_0_BASE, LMS_ADPT_ADDR));
+
 		printf("CMD:\> ");
 		scanf(" %s", &cmd);
 
@@ -212,33 +231,18 @@ int main()
 			printf("mute: %d\n", value);
 		}
 
-		if (!strcmp(cmd, "adapt"))
+		if (!strcmp(cmd, "adapt")) // Set LMS adaption coefficient
 		{
 			scanf(" %d", &value);
 			IOWR(AUDIOLMSFILTEROPT_ST_0_BASE, LMS_ADPT_ADDR, value);
 			printf("adapt: %04X\n", value);
 		}
 
-		if (!strcmp(cmd, "counter")) // Counter read
-		{
-			// Reads from memory mapped Counter block
-			//printf("Counter value: %d\n", IORD_ALTERA_AVALON_PIO_DATA(MM_BUS_COUNTER_0_BASE));
 
-		}
-
-		if (!strcmp(cmd, "enable")) // Counter enable
+		if (!strcmp(cmd, "seg")) // 7 segment BCD command
 		{
 			scanf(" %d", &value);
-			// Writes to counter block
-			//IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_COUNTER_0_BASE, value);
-			printf("Counter enabled: %d\n", value);
-		}
-
-		if (!strcmp(cmd, "hex")) // HEX command
-		{
-			scanf(" %d", &value);
-			// Writes to memory mapped PIO block
-			//IOWR_ALTERA_AVALON_PIO_DATA(MM_BUS_SEVEN_SEG_FOUR_DIGIT_0_BASE, value); //
+			displaySeg(value);
 			printf("HEX value:%d\n", value);
 
 		}
