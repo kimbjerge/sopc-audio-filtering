@@ -59,13 +59,18 @@ architecture behaviour of audioIIR_st is
   subtype coeff_type is signed(audioWidth - 1 downto 0);
   type coeff_array_type is array (0 to 4) of coeff_type;
 
-  -- Default coefficients for IIR filter low pass 1 Khz
-  constant CI_C0            : coeff_type := X"000805";
-  constant CI_C1            : coeff_type := X"00100A";
-  constant CI_C2            : coeff_type := X"000805";
-  constant CI_C3            : coeff_type := X"F17A31";
-  constant CI_C4            : coeff_type := X"06A5E6";
-  
+  -- Default coefficients for IIR filter low pass 1 Khz (20 bit)
+  --constant CI_C0            : coeff_type := X"000805"; -- 0.003916 
+  --constant CI_C1            : coeff_type := X"00100A"; -- 0.007832 
+  --constant CI_C2            : coeff_type := X"000805"; -- 0.003916 
+  --constant CI_C3            : coeff_type := X"F17A31"; -- -1.815341
+  --constant CI_C4            : coeff_type := X"06A5E6"; -- 0.831006
+  -- Default coefficients for IIR filter low pass 1 Khz (23 bit)
+  constant CI_C0            : coeff_type := X"004029";
+  constant CI_C1            : coeff_type := X"008052";
+  constant CI_C2            : coeff_type := X"004029";
+  constant CI_C3            : coeff_type := X"8BD176";
+  constant CI_C4            : coeff_type := X"352F31";  
   -- Biquad coefficients
   signal coeff   : coeff_array_type;  
   
@@ -84,7 +89,7 @@ architecture behaviour of audioIIR_st is
   signal r1 : signed(2*audioWidth-1 downto 0);
   signal r2 : signed(2*audioWidth-1 downto 0);
   signal r3 : signed(2*audioWidth-1 downto 0);
-  signal r4 : signed(2*audioWidth-1 downto 0);  
+  signal result : signed(audioWidth-1 downto 0);  
        
 begin  
 
@@ -212,7 +217,7 @@ begin
         r1 <= (others => '0');
         r2 <= (others => '0');
         r3 <= (others => '0');
-        r4 <= (others => '0');
+        result <= (others => '0');
         x1 <= (others => '0');
         x2 <= (others => '0');
         y1 <= (others => '0');
@@ -230,15 +235,15 @@ begin
           r1 <= t1 + t2 + t3;
           r2 <= t4 + t5;
           r3 <= r1 - r2;
-          r4 <= shift_left(r3, audioWidth-1);
-          left_IIR <=  std_logic_vector(r4(audioWidth-1 downto 0));
+          result <= shift_left(r3, audioWidth-1)(audioWidth-1 downto 0);
           
           -- For every new sample shift taps 
           if (left_valid = '1') then
             x2 <= x1;
             x1 <= signed(left_input);
             y2 <= y1;
-            y1 <= signed(left_IIR);
+            y1 <= result;
+            left_IIR <= std_logic_vector(result);
           end if;         
                
     end if;
