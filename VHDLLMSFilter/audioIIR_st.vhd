@@ -228,7 +228,7 @@ begin
     
     elsif rising_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
          
-          -- Pipelined 10 stages of IIR filter
+          -- Pipelined 4 stages of IIR filter
           t1 <= coeff(0) * x0;
           t2 <= coeff(1) * x1;
           t3 <= coeff(2) * x2;
@@ -287,7 +287,7 @@ begin
           if (bypass_right = CI_BYPASS) then
             ast_source_data <= right_input;
           else   
-            ast_source_data <= left_IIR; -- Output from IIR filter   
+            ast_source_data <= right_input; -- Output from IIR filter   
           end if;
           
           ast_source_channel <= chNrRight;
