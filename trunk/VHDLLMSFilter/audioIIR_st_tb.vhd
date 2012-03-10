@@ -34,7 +34,7 @@ entity audioIIR_st_tb is
             audioWidth : natural := 24; -- 24 bit audio data
             chNrLeft: std_logic_vector(2  downto 0) := "000"; -- Left audio channel number
             chNrRight: std_logic_vector(2  downto 0) := "001"; -- Right audio channel number
-            leftin_name: string := "NoiseHex.txt"; -- Contains noise (x = LMS input)
+            leftin_name: string := "NoiseSignalHex.txt"; -- Contains noise (x = LMS input)
             rightin_name: string := "NoiseSignalHex.txt"; -- Contains noise + sound (d = LMS desigeret)
             leftout_name: string := "leftoutIIR.txt";
             rightout_name: string := "rightoutIIR.txt"
