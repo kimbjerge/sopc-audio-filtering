@@ -139,37 +139,34 @@ begin
        
         noise_sample :=  coe_AudioIn_export; -- Noise signal
 
-        -- Direct FIR filter pipelined - 2 stages   
-        -- First stage shift delayline
+        -- Direct FIR filter pipelined - 3 stages   
+        -- First stage shift delayline - stage 1
         for tap_no in filterOrder downto 1 loop
           tap(tap_no) <= tap(tap_no - 1);
         end loop;
         tap(0) <= signed(noise_sample);
-        --tap(0) <= shift_right(signed(noise_sample), 1); -- Use only 23 bits of audio sample
            
-        -- Second stage performs MAC for FIR filter
+        -- Performs MAC for FIR filter
         result := (others => '0');
         for tap_no in filterOrder downto 0 loop
           result := (coeff(tap_no) * tap(tap_no)) + result;
         end loop;      
         filtered_result := shift_right(result, audioWidth-1); 
-        --error := shift_right(signed(sound_sample), 1) - resize(filtered_result, audioWidth);
         error := signed(sound_sample) - resize(filtered_result, audioWidth);
         
-        -- Third+forth stage performs adjust LMS algorithm of weights, 2 stages pipelining        
+        -- Performs adjust LMS algorithm of weights - stage 2 and 3       
         for tap_no in filterOrder downto 0 loop
           wk_i := error * tap(tap_no);
-          wk_s(tap_no) <= resize(shift_right(wk_i, audioWidth-1), audioWidth); -- First pipeline (product+shift)
+          wk_s(tap_no) <= resize(shift_right(wk_i, audioWidth-1), audioWidth); -- pipeline (product+shift)
           wk_ii := adptStep * wk_s(tap_no);
-          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, audioWidth-1), coefWidth); -- Second pipeline (MAC+shift)
+          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, audioWidth-1), coefWidth); -- pipeline (MAC+shift)
         end loop;
-          
+         
+        -- Output LMS filtered left channel 
         if (mute_left = '1') then
           coe_AudioOut_export <= (others => '0');
         else  
-          --coe_AudioOut_export <= std_logic_vector(filtered_result(audioWidth-1 downto 0));
           coe_AudioOut_export <= std_logic_vector(error(audioWidth-1 downto 0));
-          --coe_AudioOut_export <= noise_sample;     
         end if;
       end if;
 
