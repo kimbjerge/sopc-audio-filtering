@@ -190,7 +190,7 @@ begin
   end process sample_st_bus;
       
   -----------------------------------------------------------------------------
-  -- This process performs LMS filtering
+  -- This process performs LMS filtering, optimized for area
   -----------------------------------------------------------------------------
   LMSFilter : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
     variable result : prod_type;
@@ -210,9 +210,9 @@ begin
         prod(tap_no) <= (others => '0');
         wk_s(tap_no) := (others => '0');
       end loop;   
-  		  error := (others => '0');
-  		  output_sample <= (others => '0');
-  		  filter_state <= idle;
+  	  error := (others => '0');
+  	  output_sample <= (others => '0');
+  	  filter_state <= idle;
       
     elsif rising_edge(csi_AudioClk12MHz_clk) then  -- faling clock edge
       
@@ -222,9 +222,9 @@ begin
           if process_sample = '1' then 
             input_sample <= signed(noise_sample);           
             filter_state <= step1;
-			    end if;
+		  end if;
 			 
-		    when step1 =>  
+		when step1 =>  
           -- Direct FIR filter 
           -- Shift delayline
           for no in filterOrder downto 1 loop
@@ -233,26 +233,26 @@ begin
           tap(0) <= input_sample;
           tap_no := filterOrder;
           result := (others => '0');
-				  filter_state <= step2;
+		  filter_state <= step2;
 
-			 when step2 =>  
+		when step2 =>  
           -- Direct FIR filter 
           -- Performs MAC for FIR filter
           result := (coeff(tap_no) * tap(tap_no)) + result;
           if (tap_no = 0) then 
-			  	    filter_state <= step3;
-			 	  else
+		     filter_state <= step3;
+		  else
              tap_no := tap_no - 1;
-				  end if;
+		  end if;
    
-			 when step3 =>  
-			    -- Computes error
+		when step3 =>  
+		  -- Computes error
           filtered_result := shift_right(result, audioWidth-1); 
           error := signed(sound_sample) - resize(filtered_result, audioWidth);
           tap_no := filterOrder;
-				  filter_state <= step4;
+		  filter_state <= step4;
 
-			 when step4 =>  
+		when step4 =>  
           -- Performs adjust LMS algorithm of weights, 2 stages pipelining        
           wk_i := error * tap(tap_no);
           wk_s(tap_no) := resize(shift_right(wk_i, audioWidth-1), audioWidth); -- First pipeline (product+shift)
@@ -265,13 +265,13 @@ begin
           end if;  
 
 	      when others =>
-				  filter_state <= idle;
+		    filter_state <= idle;
 					
-      end case;	
-			
-			output_sample <= error;
+      end case;			
+	  
+	  output_sample <= error;
 			
     end if;
-  end process;
+  end process LMSFilter;
   
 end behaviour;

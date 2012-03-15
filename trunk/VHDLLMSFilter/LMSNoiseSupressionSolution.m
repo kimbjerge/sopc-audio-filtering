@@ -36,11 +36,21 @@ title('Frequence response of input');
 freqz(dn);
 
 figure(4);
-plot(e);
+plot(e, 'b');
 title('Adaptive filter');
 xlabel('Time index, n'); ylabel('Amplitude');
 
 figure(5);
+load 'rightoutlms.txt'
+vhdl = rightoutlms./(2^23);
+hold on
+plot(e, 'r');
+plot(vhdl, 'b');
+hold off
+title('VHDL (blue) vs. MATLAB (red)');
+xlabel('Time index, n'); ylabel('Amplitude');
+
+figure(6);
 title('Frequence response of output');
 freqz(e);
 

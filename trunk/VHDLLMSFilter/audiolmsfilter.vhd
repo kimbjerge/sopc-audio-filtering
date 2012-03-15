@@ -106,7 +106,8 @@ begin
 
   
   ------------------------------------------------------------------------
-  -- Process handling of audio clock, sampling on sync 
+  -- Process using audio clock (12 mHz) to sample sync signal (48 kHz) 
+  -- Performs LMS filtering
   ------------------------------------------------------------------------
 sample_buf_pro : process (csi_AudioClk12MHz_clk, csi_AudioClk12MHz_reset_n)
    variable noise_sample : std_logic_vector(audioWidth-1 downto 0);
@@ -120,16 +121,15 @@ begin
     
     if csi_AudioClk12MHz_reset_n = '0' then        -- asynchronous reset (active low)
       for tap_no in filterOrder downto 0 loop
-        --coeff(tap_no) <= const_coeff(tap_no);
         coeff(tap_no) <= (others => '0');
         tap(tap_no) <= (others => '0');
         prod(tap_no) <= (others => '0');
         wk_s(tap_no) <= (others => '0');
       end loop;   
-		  noise_sample := (others => '0');
-		  sound_sample := (others => '0');
-		  error := (others => '0');
-		  AudioSync_last <= '0';
+	  noise_sample := (others => '0');
+	  sound_sample := (others => '0');
+      error := (others => '0');
+	  AudioSync_last <= '0';
       coe_AudioOut_export <= (others => '0');
       
     elsif falling_edge(csi_AudioClk12MHz_clk) then  -- rising clock edge  
@@ -156,10 +156,13 @@ begin
         
         -- Performs adjust LMS algorithm of weights - stage 2 and 3       
         for tap_no in filterOrder downto 0 loop
+          -- pipeline (product+shift)
           wk_i := error * tap(tap_no);
-          wk_s(tap_no) <= resize(shift_right(wk_i, audioWidth-1), audioWidth); -- pipeline (product+shift)
+          wk_s(tap_no) <= resize(shift_right(wk_i, audioWidth-1), audioWidth); 
+		  -- pipeline (MAC+shift)
           wk_ii := adptStep * wk_s(tap_no);
-          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, audioWidth-1), coefWidth); -- pipeline (MAC+shift)
+          coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, 
+          	                        audioWidth-1), coefWidth); 
         end loop;
          
         -- Output LMS filtered left channel 
@@ -177,7 +180,6 @@ begin
           coe_AudioOut_export <= (others => '0');
         else   
           coe_AudioOut_export <= sound_sample;     
-          --coe_AudioOut_export <= std_logic_vector(filtered_result(audioWidth-1 downto 0));     
         end if;
       end if;
       
