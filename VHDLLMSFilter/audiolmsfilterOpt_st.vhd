@@ -253,9 +253,9 @@ begin
 		  filter_state <= step4;
 
 		when step4 =>  
-          -- Performs adjust LMS algorithm of weights, 2 stages pipelining        
+          -- Performs adjust LMS algorithm of weights        
           wk_i := error * tap(tap_no);
-          wk_s(tap_no) := resize(shift_right(wk_i, audioWidth-1), audioWidth); -- First pipeline (product+shift)
+          wk_s(tap_no) := resize(shift_right(wk_i, audioWidth-1), audioWidth); --(product+shift)
           wk_ii := adptStep * wk_s(tap_no);
           coeff(tap_no) <= coeff(tap_no) + resize(shift_right(wk_ii, audioWidth-1), coefWidth); -- Second pipeline (MAC+shift)
           if (tap_no = 0) then
