@@ -17,8 +17,8 @@ sn1 = sin(2*pi*f1*n/fs); % generate sinewave 8000 hz
 sn2 = sin(2*pi*f2*n/fs); % generate sinewave 800 hz
 sn3 = sin(2*pi*f3*n/fs); % generate sinewave 1000 hz 
 
-%noise=randn(size(sn1)); % generate random noise
-noise = wgn(N,1,0)';     % generate random noise
+noise=randn(size(sn1)); % generate random noise
+%noise = wgn(N,1,0)';     % generate random noise
 dn = 0.3*sn1+0.3*sn2+0.3*sn3+0.01*noise; % mixing desired sinewaves
 xn = 0.4*sn1+0.1*noise;  % generate x(n) with noise and undesired signal
 
