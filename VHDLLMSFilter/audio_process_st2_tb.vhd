@@ -87,14 +87,14 @@ begin
                                     ast_sink_data             => ast_sink_data,
                                     ast_sink_channel          => ast_sink_channel);
                                     
-    UpSampler_1: entity work.UpSampler
-    port map (clk => csi_AudioClk12MHz_clk,
-              reset_n => csi_AudioClk12MHz_reset_n,
-              ast_sink_data => ast_source_data,
-              ast_sink_valid => ast_source_valid,
-              ast_sink_channel => ast_source_channel,
-              up_sampler_clk => up_sampler_clk,
-              outputPin => SigmaIn);                                    
+    --UpSampler_1: entity work.UpSampler
+    --port map (clk => csi_AudioClk12MHz_clk,
+    --          reset_n => csi_AudioClk12MHz_reset_n,
+    --          ast_sink_data => ast_source_data,
+    --          ast_sink_valid => ast_source_valid,
+    --          ast_sink_channel => ast_source_channel,
+    --          up_sampler_clk => up_sampler_clk,
+    --          outputPin => SigmaIn);                                    
                                     
 
   stimulus: process
