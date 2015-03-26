@@ -1,0 +1,1 @@
+This project implements a SoPC project for the Altera DE2 board. The project covers VHDL implementation of a LMS filter and sigma delta converter, that can be adjusted from the Nios II processor.
